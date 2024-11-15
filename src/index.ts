@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder, TextChannel, GuildMemberRoleManager } from 'discord.js';
 import mongoose from 'mongoose';
 import UserFarm from './models/UserFarm';
 import { configDotenv } from 'dotenv';
@@ -9,13 +9,14 @@ import UserDirtyMoney from './models/UserDirtyMoney';
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const MONGO_URI = process.env.MONGO_URI;
+const CHANNEL_LOG_ID = process.env.ID_CHANNEL_LOG;
+const ROLE_ID_ADD = process.env.ROLE_ID_ADD;
+const ROLE_ID_REMOVE = process.env.ROLE_ID_REMOVE;
 
-// Conectando ao MongoDB Atlas
 mongoose.connect(MONGO_URI as string)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
-// Função para atualizar ou criar dados do usuário
 
 async function updateUserFarm(userId: string, tintas: number, papeis: number) {
     const tintasAjustadas = Math.max(0, tintas);
@@ -123,13 +124,43 @@ client.once('ready', () => {
                 }
             ],
         });
+        guild.commands.create({
+            name: 'set_nick',
+            description: 'Setar o usuario no discord',
+            options: [
+                {
+                    name: 'nome',
+                    type: 3, // STRING
+                    description: 'Nome do personagem',
+                    required: true,
+                },
+                {
+                    name: 'id',
+                    type: 3, // STRING
+                    description: 'ID na cidade',
+                    required: true,
+                },
+                {
+                    name: 'vulgo',
+                    type: 3, // STRING
+                    description: 'Apelido ou vulgo',
+                    required: true,
+                },
+                {
+                    name: 'telefone',
+                    type: 3, // STRING
+                    description: 'Número de telefone',
+                    required: true,
+                },
+            ],
+        });
     }
 });
 
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) return;
 
-    const { commandName, options } = interaction;
+    const { commandName, options, member, guild } = interaction;
     if (commandName === 'add_farm') {
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
@@ -198,12 +229,78 @@ client.on('interactionCreate', async (interaction) => {
         const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
         const userId = interaction.user.id;
         try {
-            await updateDirtyMoney(userId, quantidade as number);
+            await removeDirtyMoney(userId, quantidade as number);
             await interaction.reply('Dinheiro removido com sucesso!');
         } catch (error) {
 
             console.error('Erro ao atualizar farm:', error);
             await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
+        }
+    }
+    if (commandName === 'set_nick') {
+        const nome = options.data.find((item: { name: string; }) => item.name === 'nome')?.value;;
+        const id = options.data.find((item: { name: string; }) => item.name === 'id')?.value;;
+        const vulgo = options.data.find((item: { name: string; }) => item.name === 'vulgo')?.value;
+        const telefone = options.data.find((item: { name: string; }) => item.name === 'telefone')?.value;
+
+        if (!guild || !member || !('setNickname' in member)) {
+            await interaction.reply('Não foi possível alterar o apelido. Permissão insuficiente ou erro na execução.');
+            return;
+        }
+
+        const newNickname = `${vulgo} | ${id}`;
+        try {
+            await member.setNickname(newNickname);
+            await interaction.reply(`Apelido alterado com sucesso para: **${newNickname}**`);
+        } catch (error) {
+            console.error('Erro ao alterar o apelido:', error);
+            await interaction.reply('Não foi possível alterar o apelido. Verifique as permissões do bot.');
+            return;
+        }
+
+        try {
+            const role = guild.roles.cache.get(ROLE_ID_ADD as string);
+
+            if (!role) {
+                await interaction.followUp('O cargo especificado não foi encontrado.');
+                return;
+            }
+
+            const memberRoles = member.roles as GuildMemberRoleManager;
+            if (!memberRoles.cache.has(ROLE_ID_ADD as string)) {
+                await memberRoles.add(role);
+                await memberRoles.remove(ROLE_ID_REMOVE as string);
+                await interaction.followUp(`Cargo "${role.name}" atribuído ao usuário.`);
+            } else {
+                await interaction.followUp(`O usuário já possui o cargo "${role.name}".`);
+            }
+        } catch (error) {
+            console.error('Erro ao gerenciar cargos:', error);
+            await interaction.followUp('Ocorreu um erro ao atribuir o cargo.');
+        }
+
+
+        // Enviar dados para o canal especificado
+        const logChannel = guild.channels.cache.get(CHANNEL_LOG_ID as string) as TextChannel;
+        if (!logChannel) {
+            await interaction.followUp('Canal de logs não encontrado. Verifique o ID do canal.');
+            return;
+        }
+
+        const logMessage = `
+            **Novo Registro:**
+            - **ID:** ${id}
+            - **Nome:** ${nome}
+            - **Vulgo:** ${vulgo}
+            - **Telefone:** ${telefone}
+            - **Apelido Atualizado:** ${newNickname}
+        `;
+
+        try {
+            await logChannel.send(logMessage);
+        } catch (error) {
+            console.error('Erro ao enviar mensagem ao canal de logs:', error);
+            await interaction.followUp('Não foi possível enviar os dados para o canal de logs.');
         }
     }
 });
