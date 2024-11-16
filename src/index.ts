@@ -1,8 +1,8 @@
 import 'dotenv/config'
+import { configDotenv } from 'dotenv';
 import { Client, GatewayIntentBits, EmbedBuilder, TextChannel, GuildMemberRoleManager } from 'discord.js';
 import mongoose from 'mongoose';
 import UserFarm from './models/UserFarm';
-import { configDotenv } from 'dotenv';
 import UserDirtyMoney from './models/UserDirtyMoney';
 
 
@@ -12,6 +12,7 @@ const MONGO_URI = process.env.MONGO_URI;
 const CHANNEL_LOG_ID = process.env.ID_CHANNEL_LOG;
 const ROLE_ID_ADD = process.env.ROLE_ID_ADD;
 const ROLE_ID_REMOVE = process.env.ROLE_ID_REMOVE;
+const GUILD_ID = process.env.GUILD_ID;
 
 mongoose.connect(MONGO_URI as string)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
@@ -62,7 +63,7 @@ async function removeDirtyMoney(userId: string, amount: number) {
 client.once('ready', () => {
     console.log('Bot online!');
 
-    const guild = client.guilds.cache.get("963833225900355606"); // Opcional: Apenas para um servidor específico!
+    const guild = client.guilds.cache.get(GUILD_ID as string); // Opcional: Apenas para um servidor específico!
     if (guild) {
         guild.commands.create({
             name: 'add_farm',
@@ -217,10 +218,18 @@ client.on('interactionCreate', async (interaction) => {
         const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
         const userId = interaction.user.id;
         try {
-            await updateDirtyMoney(userId, quantidade as number);
-            await interaction.reply('Dinheiro adicionado com sucesso!');
+            const userMoney = await updateDirtyMoney(userId, quantidade as number);
+            const embedMessage = new EmbedBuilder()
+                .setColor(0x008207)
+                .setTitle('Dinheiro adicionado com sucesso!')
+                .setDescription('Foi adicionado o seguinte montante de dinheiro sujo!')
+                .addFields(
+                    { name: 'Dinheiro sujo', value: `${quantidade}`, inline: false },
+                    { name: 'Dinheiro sujo total:', value: `${userMoney.amount}`, inline: false },
+                )
+                .setTimestamp();
+            await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
-
             console.error('Erro ao atualizar farm:', error);
             await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
         }
@@ -229,8 +238,17 @@ client.on('interactionCreate', async (interaction) => {
         const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
         const userId = interaction.user.id;
         try {
-            await removeDirtyMoney(userId, quantidade as number);
-            await interaction.reply('Dinheiro removido com sucesso!');
+            const userMoney = await removeDirtyMoney(userId, quantidade as number);
+            const embedMessage = new EmbedBuilder()
+                .setColor(0x008207)
+                .setTitle('Dinheiro removido com sucesso!')
+                .setDescription('Foi adicionado o seguinte montante de dinheiro sujo!')
+                .addFields(
+                    { name: 'Dinheiro sujo', value: `${quantidade}`, inline: false },
+                    { name: 'Dinheiro sujo total:', value: `${userMoney.amount}`, inline: false },
+                )
+                .setTimestamp();
+            await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
 
             console.error('Erro ao atualizar farm:', error);
@@ -243,65 +261,75 @@ client.on('interactionCreate', async (interaction) => {
         const vulgo = options.data.find((item: { name: string; }) => item.name === 'vulgo')?.value;
         const telefone = options.data.find((item: { name: string; }) => item.name === 'telefone')?.value;
 
-        if (!guild || !member || !('setNickname' in member)) {
-            await interaction.reply('Não foi possível alterar o apelido. Permissão insuficiente ou erro na execução.');
-            return;
-        }
+        const embedMessage = new EmbedBuilder()
+            .setColor(0x008207)
+            .setTitle('Comando desabilitado 😢')
+            .setDescription('No momento esta interação esta desativada, tente novamente mais tarde!')
+            .setTimestamp();
+        await interaction.reply({ embeds: [embedMessage] });
 
-        const newNickname = `${vulgo} | ${id}`;
-        try {
-            await member.setNickname(newNickname);
-            await interaction.reply(`Apelido alterado com sucesso para: **${newNickname}**`);
-        } catch (error) {
-            console.error('Erro ao alterar o apelido:', error);
-            await interaction.reply('Não foi possível alterar o apelido. Verifique as permissões do bot.');
-            return;
-        }
+        // if (!guild || !member || !('setNickname' in member)) {
+        //     await interaction.reply('Não foi possível alterar o apelido. Permissão insuficiente ou erro na execução.');
+        //     return;
+        // }
 
-        try {
-            const role = guild.roles.cache.get(ROLE_ID_ADD as string);
+        // const newNickname = `${vulgo} | ${id}`;
+        // try {
+        //     await member.setNickname(newNickname);
+        //     await interaction.reply(`Apelido alterado com sucesso para: **${newNickname}**`);
+        // } catch (error) {
+        //     console.error('Erro ao alterar o apelido:', error);
+        //     await interaction.reply('Não foi possível alterar o apelido. Verifique as permissões do bot.');
+        //     return;
+        // }
 
-            if (!role) {
-                await interaction.followUp('O cargo especificado não foi encontrado.');
-                return;
-            }
+        // try {
+        //     const role = guild.roles.cache.get(ROLE_ID_ADD as string);
 
-            const memberRoles = member.roles as GuildMemberRoleManager;
-            if (!memberRoles.cache.has(ROLE_ID_ADD as string)) {
-                await memberRoles.add(role);
-                await memberRoles.remove(ROLE_ID_REMOVE as string);
-                await interaction.followUp(`Cargo "${role.name}" atribuído ao usuário.`);
-            } else {
-                await interaction.followUp(`O usuário já possui o cargo "${role.name}".`);
-            }
-        } catch (error) {
-            console.error('Erro ao gerenciar cargos:', error);
-            await interaction.followUp('Ocorreu um erro ao atribuir o cargo.');
-        }
+        //     if (!role) {
+        //         await interaction.followUp('O cargo especificado não foi encontrado.');
+        //         return;
+        //     }
+
+        //     const memberRoles = member.roles as GuildMemberRoleManager;
+        //     if (!memberRoles.cache.has(ROLE_ID_ADD as string)) {
+        //         await memberRoles.add(role);
+        //         await memberRoles.remove(ROLE_ID_REMOVE as string);
+        //         await interaction.followUp(`Cargo "${role.name}" atribuído ao usuário.`);
+        //     } else {
+        //         await interaction.followUp(`O usuário já possui o cargo "${role.name}".`);
+        //     }
+        // } catch (error) {
+        //     console.error('Erro ao gerenciar cargos:', error);
+        //     await interaction.followUp('Ocorreu um erro ao atribuir o cargo.');
+        // }
 
 
-        // Enviar dados para o canal especificado
-        const logChannel = guild.channels.cache.get(CHANNEL_LOG_ID as string) as TextChannel;
-        if (!logChannel) {
-            await interaction.followUp('Canal de logs não encontrado. Verifique o ID do canal.');
-            return;
-        }
+        // // Enviar dados para o canal especificado
+        // const logChannel = guild.channels.cache.get(CHANNEL_LOG_ID as string) as TextChannel;
+        // if (!logChannel) {
+        //     await interaction.followUp('Canal de logs não encontrado. Verifique o ID do canal.');
+        //     return;
+        // }
 
-        const logMessage = `
-            **Novo Registro:**
-            - **ID:** ${id}
-            - **Nome:** ${nome}
-            - **Vulgo:** ${vulgo}
-            - **Telefone:** ${telefone}
-            - **Apelido Atualizado:** ${newNickname}
-        `;
+        // const embedMessage = new EmbedBuilder()
+        //     .setColor(0x0099ff)
+        //     .setTitle('Novo registro de usuario')
+        //     .addFields(
+        //         { name: 'ID:', value: `${id}`, inline: false },
+        //         { name: 'Nome', value: `${nome}`, inline: false },
+        //         { name: 'Vulgo:', value: `${vulgo}`, inline: false },
+        //         { name: 'Telefone', value: `${telefone}`, inline: false },
+        //         { name: 'Nick atualizado', value: `${newNickname}`, inline: false },
+        //     )
+        //     .setTimestamp();
 
-        try {
-            await logChannel.send(logMessage);
-        } catch (error) {
-            console.error('Erro ao enviar mensagem ao canal de logs:', error);
-            await interaction.followUp('Não foi possível enviar os dados para o canal de logs.');
-        }
+        // try {
+        //     await logChannel.send({ embeds: [embedMessage] });
+        // } catch (error) {
+        //     console.error('Erro ao enviar mensagem ao canal de logs:', error);
+        //     await interaction.followUp('Não foi possível enviar os dados para o canal de logs.');
+        // }
     }
 });
 
