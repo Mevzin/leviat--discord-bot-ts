@@ -61,6 +61,10 @@ client.once('ready', () => {
             ],
         });
         guild.commands.create({
+            name: 'list_farm',
+            description: 'Lista todos os usuários e seus farms (tintas e papéis).',
+        });
+        guild.commands.create({
             name: 'add_money',
             description: 'Adicionar dinheiro sujo.',
             options: [
@@ -115,8 +119,8 @@ client.once('ready', () => {
             ],
         });
         guild.commands.create({
-            name: 'list_farm',
-            description: 'Lista todos os usuários e seus farms (tintas e papéis).',
+            name: 'list_money',
+            description: 'Lista todos os usuários e seus saldos em dinheiro sujo.',
         });
     }
 });

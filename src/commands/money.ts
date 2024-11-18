@@ -66,4 +66,30 @@ export default async function moneyCommands(
             await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
         }
     }
+
+    if (commandName.includes("list")) {
+        try {
+            const farms = await UserDirtyMoney.find();
+            if (farms.length === 0) {
+                await interaction.reply('Nenhum farm foi registrado ainda.');
+                return;
+            }
+
+            const farmList = farms.map((farm, index) => {
+                return `Membro: <@${farm.userId}>\n` +
+                    `- Saldo: ${farm.amount}`;
+            }).join('\n\n');
+
+            if (farmList.length > 2000) {
+                await interaction.reply('Os dados são muito grandes para exibir aqui. Por favor, reduza o número de registros.');
+                return;
+            }
+
+            await interaction.reply(`**Lista de Saldo:**\n\n${farmList}`);
+            return
+        } catch (error) {
+            console.error('Erro ao listar os saldos:', error);
+            await interaction.reply('Ocorreu um erro ao listar os saldos. Tente novamente mais tarde.');
+        }
+    }
 }
