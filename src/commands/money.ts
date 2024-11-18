@@ -76,17 +76,15 @@ export default async function moneyCommands(
             }
 
             const farmList = farms.map((farm, index) => {
-                return `Membro: <@${farm.userId}>\n` +
-                    `- Saldo: ${farm.amount}`;
-            }).join('\n\n');
+                return ({ name: ` `, value: `<@${farm.userId}> | Saldo: ${farm.amount}` })
+            })
 
-            if (farmList.length > 2000) {
-                await interaction.reply('Os dados são muito grandes para exibir aqui. Por favor, reduza o número de registros.');
-                return;
-            }
-
-            await interaction.reply(`**Lista de Saldo:**\n\n${farmList}`);
-            return
+            const embedMessage = new EmbedBuilder()
+                .setColor(0x0482bd)
+                .setTitle('Lista de membros e seus saldos!')
+                .addFields(farmList)
+                .setTimestamp();
+            await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
             console.error('Erro ao listar os saldos:', error);
             await interaction.reply('Ocorreu um erro ao listar os saldos. Tente novamente mais tarde.');

@@ -36,6 +36,7 @@ export default async function farmCommands(
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
         const userId = interaction.user.id;
+        const userName = interaction.user;
 
         try {
             const userFarm = await updateUserFarm(userId, tintas as number, papeis as number);
@@ -92,18 +93,15 @@ export default async function farmCommands(
             }
 
             const farmList = farms.map((farm, index) => {
-                return `Membro: <@${farm.userId}>\n` +
-                    `- Tintas: ${farm.tintas}\n` +
-                    `- Papéis: ${farm.papeis}`;
-            }).join('\n\n');
+                return ({ name: ` `, value: `<@${farm.userId}> | Tintas: ${farm.tintas} | Papeis: ${farm.papeis}` })
+            })
 
-            if (farmList.length > 2000) {
-                await interaction.reply('Os dados são muito grandes para exibir aqui. Por favor, reduza o número de registros.');
-                return;
-            }
-
-            await interaction.reply(`**Lista de Farm:**\n\n${farmList}`);
-            return
+            const embedMessage = new EmbedBuilder()
+                .setColor(0x0482bd)
+                .setTitle('Lista de membros e seus farms!')
+                .addFields(farmList)
+                .setTimestamp();
+            await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
             console.error('Erro ao listar farms:', error);
             await interaction.reply('Ocorreu um erro ao listar os farms. Tente novamente mais tarde.');
