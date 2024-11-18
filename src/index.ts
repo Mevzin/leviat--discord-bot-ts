@@ -43,7 +43,7 @@ client.once('ready', () => {
             ],
         });
         guild.commands.create({
-            name: 'rm_farm',
+            name: 'remove_farm',
             description: 'Remover tintas e papéis do seu farm',
             options: [
                 {
@@ -113,6 +113,10 @@ client.once('ready', () => {
                     required: true,
                 },
             ],
+        });
+        guild.commands.create({
+            name: 'list_farm',
+            description: 'Lista todos os usuários e seus farms (tintas e papéis).',
         });
     }
 });

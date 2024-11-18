@@ -58,7 +58,7 @@ export default async function farmCommands(
         }
     }
 
-    if (commandName.includes("rm")) {
+    if (commandName.includes("remove")) {
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
         const userId = interaction.user.id;
@@ -81,6 +81,32 @@ export default async function farmCommands(
         } catch (error) {
             console.error('Erro ao atualizar farm:', error);
             await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
+        }
+    }
+    if (commandName.includes("list")) {
+        try {
+            const farms = await UserFarm.find();
+            if (farms.length === 0) {
+                await interaction.reply('Nenhum farm foi registrado ainda.');
+                return;
+            }
+
+            const farmList = farms.map((farm, index) => {
+                return `Membro: <@${farm.userId}>\n` +
+                    `- Tintas: ${farm.tintas}\n` +
+                    `- Papéis: ${farm.papeis}`;
+            }).join('\n\n');
+
+            if (farmList.length > 2000) {
+                await interaction.reply('Os dados são muito grandes para exibir aqui. Por favor, reduza o número de registros.');
+                return;
+            }
+
+            await interaction.reply(`**Lista de Farm:**\n\n${farmList}`);
+            return
+        } catch (error) {
+            console.error('Erro ao listar farms:', error);
+            await interaction.reply('Ocorreu um erro ao listar os farms. Tente novamente mais tarde.');
         }
     }
 }
