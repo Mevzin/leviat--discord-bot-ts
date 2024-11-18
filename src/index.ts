@@ -4,6 +4,7 @@ import { Client, GatewayIntentBits, EmbedBuilder, TextChannel, GuildMemberRoleMa
 import mongoose from 'mongoose';
 import UserFarm from './models/UserFarm';
 import UserDirtyMoney from './models/UserDirtyMoney';
+import globalCommandsHandler from './commands';
 
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -17,48 +18,6 @@ const GUILD_ID = process.env.GUILD_ID;
 mongoose.connect(MONGO_URI as string)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
-
-
-async function updateUserFarm(userId: string, tintas: number, papeis: number) {
-    const tintasAjustadas = Math.max(0, tintas);
-    const papeisAjustados = Math.max(0, papeis);
-
-    const userFarm = await UserFarm.findOneAndUpdate(
-        { userId },
-        { $inc: { tintas: (tintasAjustadas), papeis: (papeisAjustados) } },
-        { new: true, upsert: true }
-    );
-    return userFarm;
-}
-
-async function removeUserFarm(userId: string, tintas: number, papeis: number) {
-    const tintasAjustadas = Math.max(0, tintas);
-    const papeisAjustados = Math.max(0, papeis);
-
-    const userFarm = await UserFarm.findOneAndUpdate(
-        { userId },
-        { $inc: { tintas: -(tintasAjustadas), papeis: -(papeisAjustados) } },
-        { new: true, upsert: true }
-    );
-    return userFarm;
-}
-
-async function updateDirtyMoney(userId: string, amount: number) {
-    const amountToUpdate = Math.max(0, amount);
-
-    const amountFarm = await UserDirtyMoney.findOneAndUpdate({ userId }, { $inc: { amount: (amountToUpdate) } }, { new: true, upsert: true })
-    return amountFarm;
-}
-
-async function removeDirtyMoney(userId: string, amount: number) {
-    const amountToUpdate = Math.max(0, amount);
-
-    const amountFarm = await UserDirtyMoney.findOneAndUpdate(
-        { userId },
-        { $inc: { amount: -(amountToUpdate) } },
-        { new: true, upsert: true })
-    return amountFarm;
-}
 
 client.once('ready', () => {
     console.log('Bot online!');
@@ -162,99 +121,8 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) return;
 
     const { commandName, options, member, guild } = interaction;
-    if (commandName === 'add_farm') {
-        const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
-        const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
-        const userId = interaction.user.id;
+    globalCommandsHandler(commandName, options, member, guild, interaction)
 
-        try {
-            const userFarm = await updateUserFarm(userId, tintas as number, papeis as number);
-            const embedMessage = new EmbedBuilder()
-                .setColor(0x008207)
-                .setTitle('Farm atualizado com sucesso')
-                .setDescription('Foram adicionados as seguintes quantidades!')
-                .addFields(
-                    { name: 'Tintas', value: `${tintas}`, inline: true },
-                    { name: 'Papel Moeda', value: `${papeis}`, inline: true },
-                )
-                .addFields(
-                    { name: 'Total de tintas', value: `${userFarm?.tintas}`, inline: false },
-                    { name: 'Total de Papel Moeda', value: `${userFarm?.papeis}`, inline: false },
-                )
-                .setTimestamp();
-            await interaction.reply({ embeds: [embedMessage] });
-        } catch (error) {
-            console.error('Erro ao atualizar farm:', error);
-            await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
-        }
-    }
-    if (commandName === 'rm_farm') {
-        const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
-        const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
-        const userId = interaction.user.id;
-
-        try {
-            const userFarm = await removeUserFarm(userId, tintas as number, papeis as number);
-            const embedMessage = new EmbedBuilder()
-                .setColor(0x0099ff)
-                .setTitle('Farm atualizado com sucesso')
-                .setDescription('Foram removidos as seguintes quantidades!')
-                .addFields(
-                    { name: 'Tintas', value: `${tintas}`, inline: true },
-                    { name: 'Papel Moeda', value: `${papeis}`, inline: true },
-                )
-                .addFields(
-                    { name: 'Total de tintas', value: `${userFarm?.tintas}`, inline: false },
-                    { name: 'Total de Papel Moeda', value: `${userFarm?.papeis}`, inline: false },
-                )
-                .setTimestamp();
-            await interaction.reply({ embeds: [embedMessage] });
-        } catch (error) {
-            console.error('Erro ao atualizar farm:', error);
-            await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
-        }
-    }
-    if (commandName === 'add_money') {
-        const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
-        const userId = interaction.user.id;
-        try {
-            const userMoney = await updateDirtyMoney(userId, quantidade as number);
-            const embedMessage = new EmbedBuilder()
-                .setColor(0x008207)
-                .setTitle('Dinheiro adicionado com sucesso!')
-                .setDescription('Foi adicionado o seguinte montante de dinheiro sujo!')
-                .addFields(
-                    { name: 'Dinheiro sujo', value: `${quantidade}`, inline: false },
-                    { name: 'Dinheiro sujo total:', value: `${userMoney.amount}`, inline: false },
-                )
-                .setTimestamp();
-            await interaction.reply({ embeds: [embedMessage] });
-        } catch (error) {
-            console.error('Erro ao atualizar farm:', error);
-            await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
-        }
-    }
-    if (commandName === 'rm_money') {
-        const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
-        const userId = interaction.user.id;
-        try {
-            const userMoney = await removeDirtyMoney(userId, quantidade as number);
-            const embedMessage = new EmbedBuilder()
-                .setColor(0x008207)
-                .setTitle('Dinheiro removido com sucesso!')
-                .setDescription('Foi adicionado o seguinte montante de dinheiro sujo!')
-                .addFields(
-                    { name: 'Dinheiro sujo', value: `${quantidade}`, inline: false },
-                    { name: 'Dinheiro sujo total:', value: `${userMoney.amount}`, inline: false },
-                )
-                .setTimestamp();
-            await interaction.reply({ embeds: [embedMessage] });
-        } catch (error) {
-
-            console.error('Erro ao atualizar farm:', error);
-            await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
-        }
-    }
     if (commandName === 'set_nick') {
         const nome = options.data.find((item: { name: string; }) => item.name === 'nome')?.value;;
         const id = options.data.find((item: { name: string; }) => item.name === 'id')?.value;;
@@ -262,7 +130,7 @@ client.on('interactionCreate', async (interaction) => {
         const telefone = options.data.find((item: { name: string; }) => item.name === 'telefone')?.value;
 
         const embedMessage = new EmbedBuilder()
-            .setColor(0x008207)
+            .setColor(0xc40404)
             .setTitle('Comando desabilitado 😢')
             .setDescription('No momento esta interação esta desativada, tente novamente mais tarde!')
             .setTimestamp();
