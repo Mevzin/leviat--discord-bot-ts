@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { configDotenv } from 'dotenv';
-import { Client, GatewayIntentBits, EmbedBuilder, TextChannel, GuildMemberRoleManager } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder, TextChannel, GuildMemberRoleManager, ActivityType } from 'discord.js';
 import mongoose from 'mongoose';
 import UserFarm from './models/UserFarm';
 import UserDirtyMoney from './models/UserDirtyMoney';
@@ -19,8 +19,32 @@ mongoose.connect(MONGO_URI as string)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log('Bot online!');
+
+    const updateStatus = async () => {
+        try {
+            const guilds = client.guilds.cache;
+            let totalMembers = 0;
+
+            for (const guild of guilds.values()) {
+                const fetchedGuild = await guild.fetch();
+                totalMembers += fetchedGuild.memberCount;
+            }
+
+            client.user?.setPresence({
+                activities: [
+                    {
+                        name: `${totalMembers} usuários!`,
+                        type: ActivityType.Watching,
+                    },
+                ],
+                status: 'idle',
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+        }
+    };
 
     const guild = client.guilds.cache.get(GUILD_ID as string); // Opcional: Apenas para um servidor específico!
     if (guild) {
@@ -123,6 +147,8 @@ client.once('ready', () => {
             description: 'Lista todos os usuários e seus saldos em dinheiro sujo.',
         });
     }
+    await updateStatus();
+    setInterval(updateStatus, 10 * 60 * 1000);
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -207,6 +233,7 @@ client.on('interactionCreate', async (interaction) => {
         //     await interaction.followUp('Não foi possível enviar os dados para o canal de logs.');
         // }
     }
+
 });
 
 client.login(BOT_TOKEN);
