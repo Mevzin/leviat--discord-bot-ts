@@ -24,7 +24,7 @@ export default async function moneyCommands(
     guild: Guild | null,
     interaction: any
 ) {
-    if (commandName.includes("add")) {
+    if (commandName.includes("add_")) {
         const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
         const userId = interaction.user.id;
         try {
@@ -45,7 +45,7 @@ export default async function moneyCommands(
         }
     }
 
-    if (commandName.includes("rm")) {
+    if (commandName.includes("rm_")) {
         const quantidade = options.data.find((item: { name: string; }) => item.name === 'quantidade')?.value;
         const userId = interaction.user.id;
         try {
@@ -67,7 +67,7 @@ export default async function moneyCommands(
         }
     }
 
-    if (commandName.includes("list")) {
+    if (commandName.includes("list_")) {
         try {
             const farms = await UserDirtyMoney.find();
             if (farms.length === 0) {
@@ -83,6 +83,7 @@ export default async function moneyCommands(
                 .setColor(0x0482bd)
                 .setTitle('Lista de membros e seus saldos!')
                 .addFields(farmList)
+                .addFields({ name: "Contagem de membros cadastrados:", value: `${farms.length}` })
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {

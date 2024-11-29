@@ -32,7 +32,7 @@ export default async function farmCommands(
     guild: Guild | null,
     interaction: any
 ) {
-    if (commandName.includes("add")) {
+    if (commandName.includes("add_")) {
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
         const userId = interaction.user.id;
@@ -59,7 +59,7 @@ export default async function farmCommands(
         }
     }
 
-    if (commandName.includes("rm")) {
+    if (commandName.includes("rm_")) {
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
         const userId = interaction.user.id;
@@ -84,9 +84,7 @@ export default async function farmCommands(
             await interaction.reply('Ocorreu um erro ao atualizar seus dados.');
         }
     }
-    if (commandName.includes("list")) {
-        console.log(interaction.user.flags);
-
+    if (commandName.includes("list_")) {
         try {
             const farms = await UserFarm.find();
             if (farms.length === 0) {
@@ -102,6 +100,7 @@ export default async function farmCommands(
                 .setColor(0x0482bd)
                 .setTitle('Lista de membros e seus farms!')
                 .addFields(farmList)
+                .addFields({ name: "Contagem de membros cadastrados:", value: `${farms.length}` })
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
@@ -111,17 +110,14 @@ export default async function farmCommands(
     }
 
     if (commandName.includes("reset")) {
-
         if (interaction.user.flags.UserFlagsBitField !== UserFlagsBitField.Flags.Staff) {
             await interaction.reply('Você não tem permissão para usar este comando.');
             return;
         }
 
         try {
-            // Atualiza todos os registros no banco para zerar tintas e papéis
             const result = await UserFarm.updateMany({}, { tintas: 0, papeis: 0 });
 
-            // Notifica o executor do comando
             await interaction.reply(
                 `Os campos de tintas e papéis foram redefinidos para **${result.modifiedCount}** usuários.`
             );
