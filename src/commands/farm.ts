@@ -1,4 +1,4 @@
-import { APIInteractionGuildMember, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction } from "discord.js";
+import { APIInteractionGuildMember, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction, PermissionsBitField, UserFlagsBitField } from "discord.js";
 import UserFarm from "../models/UserFarm";
 
 async function updateUserFarm(userId: string, tintas: number, papeis: number) {
@@ -59,7 +59,7 @@ export default async function farmCommands(
         }
     }
 
-    if (commandName.includes("remove")) {
+    if (commandName.includes("rm")) {
         const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
         const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
         const userId = interaction.user.id;
@@ -85,6 +85,8 @@ export default async function farmCommands(
         }
     }
     if (commandName.includes("list")) {
+        console.log(interaction.user.flags);
+
         try {
             const farms = await UserFarm.find();
             if (farms.length === 0) {
@@ -105,6 +107,27 @@ export default async function farmCommands(
         } catch (error) {
             console.error('Erro ao listar farms:', error);
             await interaction.reply('Ocorreu um erro ao listar os farms. Tente novamente mais tarde.');
+        }
+    }
+
+    if (commandName.includes("reset")) {
+
+        if (interaction.user.flags.UserFlagsBitField !== UserFlagsBitField.Flags.Staff) {
+            await interaction.reply('Você não tem permissão para usar este comando.');
+            return;
+        }
+
+        try {
+            // Atualiza todos os registros no banco para zerar tintas e papéis
+            const result = await UserFarm.updateMany({}, { tintas: 0, papeis: 0 });
+
+            // Notifica o executor do comando
+            await interaction.reply(
+                `Os campos de tintas e papéis foram redefinidos para **${result.modifiedCount}** usuários.`
+            );
+        } catch (error) {
+            console.error('Erro ao redefinir farms:', error);
+            await interaction.reply('Ocorreu um erro ao redefinir os farms. Tente novamente mais tarde.');
         }
     }
 }

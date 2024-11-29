@@ -43,7 +43,7 @@ client.once('ready', () => {
             ],
         });
         guild.commands.create({
-            name: 'remove_farm',
+            name: 'rm_farm',
             description: 'Remover tintas e papéis do seu farm',
             options: [
                 {

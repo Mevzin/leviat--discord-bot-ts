@@ -1,4 +1,4 @@
-import { APIInteractionGuildMember, CacheType, CommandInteractionOptionResolver, Guild, GuildMember, Interaction } from "discord.js";
+import { APIInteractionGuildMember, Guild, GuildMember } from "discord.js";
 import farmCommands from "./farm";
 import moneyCommands from "./money";
 
