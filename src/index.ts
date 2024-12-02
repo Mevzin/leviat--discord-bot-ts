@@ -22,6 +22,7 @@ mongoose.connect(MONGO_URI as string)
 client.once('ready', async () => {
     console.log('Bot online!');
 
+    //Presence status
     const updateStatus = async () => {
         try {
             const guilds = client.guilds.cache;
@@ -46,8 +47,12 @@ client.once('ready', async () => {
         }
     };
 
-    const guild = client.guilds.cache.get(GUILD_ID as string); // Opcional: Apenas para um servidor específico!
+    // Opcional: Apenas para um servidor específico! >>>
+    const guild = client.guilds.cache.get(GUILD_ID as string);
+    // <<<
     if (guild) {
+
+        //Farm start >>>>>>>>>
         guild.commands.create({
             name: 'add_farm',
             description: 'Adiciona tintas e papéis ao seu farm',
@@ -88,6 +93,10 @@ client.once('ready', async () => {
             name: 'list_farm',
             description: 'Lista todos os usuários e seus farms (tintas e papéis).',
         });
+
+        //Farm end <<<<<<<<<<
+
+        //Dirt money start >>>>>>>>>>>>
         guild.commands.create({
             name: 'add_money',
             description: 'Adicionar dinheiro sujo.',
@@ -100,6 +109,7 @@ client.once('ready', async () => {
                 }
             ],
         });
+
         guild.commands.create({
             name: 'rm_money',
             description: 'Remover dinheiro sujo.',
@@ -112,6 +122,12 @@ client.once('ready', async () => {
                 }
             ],
         });
+
+        guild.commands.create({
+            name: 'list_money',
+            description: 'Lista todos os usuários e seus saldos em dinheiro sujo.',
+        });
+        //Dirt money end <<<<<<<<<<<<<<<
         guild.commands.create({
             name: 'set_nick',
             description: 'Setar o usuario no discord',
@@ -141,10 +157,6 @@ client.once('ready', async () => {
                     required: true,
                 },
             ],
-        });
-        guild.commands.create({
-            name: 'list_money',
-            description: 'Lista todos os usuários e seus saldos em dinheiro sujo.',
         });
     }
     await updateStatus();
