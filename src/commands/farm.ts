@@ -1,4 +1,4 @@
-import { APIInteractionGuildMember, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction, PermissionsBitField, UserFlagsBitField } from "discord.js";
+import { APIEmbedField, APIInteractionGuildMember, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction, PermissionsBitField, UserFlagsBitField } from "discord.js";
 import UserFarm from "../models/UserFarm";
 
 async function updateUserFarm(userId: string, tintas: number, papeis: number) {
@@ -92,17 +92,26 @@ export default async function farmCommands(
                 return;
             }
 
+            function handleFarm(tintas: number, papeis: number) {
+                if (tintas < 2000 && papeis < 4000) {
+                    return "❌"
+                } else {
+                    return "✔"
+                }
+            }
+
             const farmList = farms.map((farm, index) => {
-                return ({ name: ` `, value: `<@${farm.userId}> | Tintas: ${farm.tintas} | Papeis: ${farm.papeis}` })
+                return ({ name: ` Tintas: ${farm.tintas} | Papeis: ${farm.papeis}  `, value: `<@${farm.userId}> | ${handleFarm(farm.tintas, farm.papeis)}` })
             })
 
             const embedMessage = new EmbedBuilder()
-                .setColor(0x0482bd)
-                .setTitle('Lista de membros e seus farms!')
+                .setColor(0x2f302f)
+                .setTitle('Farm dos membros!')
                 .addFields(farmList)
-                .addFields({ name: "Contagem de membros cadastrados:", value: `${farms.length}` })
+                .addFields({ name: "Número de membros cadastrados: ", value: `${farms.length}` })
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
+
         } catch (error) {
             console.error('Erro ao listar farms:', error);
             await interaction.reply('Ocorreu um erro ao listar os farms. Tente novamente mais tarde.');
