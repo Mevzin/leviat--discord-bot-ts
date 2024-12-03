@@ -75,15 +75,23 @@ export default async function moneyCommands(
                 return;
             }
 
+            function handleMoney(amount: number) {
+                if (amount < 500000) {
+                    return "❌"
+                } else {
+                    return "✔"
+                }
+            }
+
             const farmList = farms.map((farm, index) => {
-                return ({ name: ` `, value: `<@${farm.userId}> | Saldo: ${farm.amount}` })
+                return ({ name: `Valor: ${farm.amount}`, value: `<@${farm.userId}> |  ${handleMoney(farm.amount)}` })
             })
 
             const embedMessage = new EmbedBuilder()
-                .setColor(0x0482bd)
-                .setTitle('Lista de membros e seus saldos!')
+                .setColor(0x2f302f)
+                .setTitle('Saldo dinheiro sujo!')
                 .addFields(farmList)
-                .addFields({ name: "Contagem de membros cadastrados:", value: `${farms.length}` })
+                .addFields({ name: "Número de membros cadastrados: ", value: `${farms.length}` })
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
         } catch (error) {
