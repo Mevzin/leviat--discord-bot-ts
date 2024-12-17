@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@discordjs/builders": "^1.9.0",
     "botlevi": "file:",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",

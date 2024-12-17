@@ -111,6 +111,19 @@ client.once('ready', async () => {
         });
 
         guild.commands.create({
+            name: 'tools_remove_member',
+            description: 'Remover um usuario da lista de farm!',
+            options: [
+                {
+                    name: 'user',
+                    type: 6,
+                    description: 'Id do usuario!',
+                    required: true,
+                }
+            ],
+        });
+
+        guild.commands.create({
             name: 'rm_money',
             description: 'Remover dinheiro sujo.',
             options: [
@@ -183,7 +196,7 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.reply({ embeds: [embedMessage] });
 
         // if (!guild || !member || !('setNickname' in member)) {
-        //     await interaction.reply('Não foi possível alterar o apelido. Permissão insuficiente ou erro na execução.');
+        //    await interaction.reply('Não foi possível alterar o apelido. Permissão insuficiente ou erro na execução.');
         //     return;
         // }
 

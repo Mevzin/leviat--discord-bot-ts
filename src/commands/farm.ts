@@ -1,5 +1,6 @@
-import { APIEmbedField, APIInteractionGuildMember, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction, PermissionsBitField, UserFlagsBitField } from "discord.js";
+import { APIEmbedField, APIInteractionGuildMember, AttachmentBuilder, CommandInteractionOptionResolver, EmbedBuilder, Guild, GuildMember, Interaction, PermissionsBitField, UserFlagsBitField } from "discord.js";
 import UserFarm from "../models/UserFarm";
+import { unlinkSync, writeFileSync } from "fs";
 
 async function updateUserFarm(userId: string, tintas: number, papeis: number) {
     const adjustedPaints = Math.max(0, tintas);
@@ -86,8 +87,8 @@ export default async function farmCommands(
     }
     if (commandName.includes("list_")) {
         try {
-            const farms = await UserFarm.find();
-            if (farms.length === 0) {
+            const users = await UserFarm.find();
+            if (users.length === 0) {
                 await interaction.reply('Nenhum farm foi registrado ainda.');
                 return;
             }
@@ -100,18 +101,25 @@ export default async function farmCommands(
                 }
             }
 
-            const farmList = farms.map((farm, index) => {
-                return ({ name: ` Tintas: ${farm.tintas} | Papeis: ${farm.papeis}  `, value: `<@${farm.userId}> | ${handleFarm(farm.tintas, farm.papeis)}` })
-            })
+            let fileContent = 'Lista de Farms\n\n';
+            users.forEach((user) => {
+                fileContent += `Usuário: <@${user.userId}> | ${handleFarm(user.tintas, user.papeis)} ┐\n`;
+                fileContent += `│  - Tintas: ${user.tintas}              │\n`;
+                fileContent += `│  - Papéis: ${user.papeis}              │\n`;
+                fileContent += `└───────────────────────────────────┘ \n\n`;
+            });
 
-            const embedMessage = new EmbedBuilder()
-                .setColor(0x2f302f)
-                .setTitle('Farm dos membros!')
-                .addFields(farmList)
-                .addFields({ name: "Número de membros cadastrados: ", value: `${farms.length}` })
-                .setTimestamp();
-            await interaction.reply({ embeds: [embedMessage] });
+            const filePath = './farms.txt';
+            writeFileSync(filePath, fileContent);
 
+            const attachment = new AttachmentBuilder(filePath, { name: 'farms.txt' });
+
+            await interaction.reply({
+                content: 'Aqui está o arquivo com os farms exportados:',
+                files: [attachment],
+            });
+
+            unlinkSync(filePath);
         } catch (error) {
             console.error('Erro ao listar farms:', error);
             await interaction.reply('Ocorreu um erro ao listar os farms. Tente novamente mais tarde.');
