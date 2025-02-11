@@ -55,38 +55,26 @@ client.once('ready', async () => {
         //Farm start >>>>>>>>>
         guild.commands.create({
             name: 'add_farm',
-            description: 'Adiciona tintas e papéis ao seu farm',
+            description: 'Adiciona recibos ao seu farm',
             options: [
                 {
-                    name: 'tintas',
+                    name: 'recibos',
                     type: 4,
-                    description: 'Quantidade de tintas para adicionar',
-                    required: true,
-                },
-                {
-                    name: 'papeis',
-                    type: 4,
-                    description: 'Quantidade de papéis para adicionar',
+                    description: 'Quantidade de recibos para adicionar',
                     required: true,
                 },
             ],
         });
         guild.commands.create({
             name: 'rm_farm',
-            description: 'Remover tintas e papéis do seu farm',
+            description: 'Remover recibos do seu farm',
             options: [
                 {
-                    name: 'tintas',
+                    name: 'recibos',
                     type: 4,
-                    description: 'Quantidade de tintas para remover',
+                    description: 'Quantidade de recibos para remover',
                     required: true,
-                },
-                {
-                    name: 'papeis',
-                    type: 4,
-                    description: 'Quantidade de papéis para remover',
-                    required: true,
-                },
+                }
             ],
         });
         guild.commands.create({

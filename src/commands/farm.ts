@@ -2,25 +2,23 @@ import { APIEmbedField, APIInteractionGuildMember, AttachmentBuilder, CommandInt
 import UserFarm from "../models/UserFarm";
 import { unlinkSync, writeFileSync } from "fs";
 
-async function updateUserFarm(userId: string, tintas: number, papeis: number) {
-    const adjustedPaints = Math.max(0, tintas);
-    const adjustedPapers = Math.max(0, papeis);
+async function updateUserFarm(userId: string, recibos: number) {
+    const adjustedNotes = Math.max(0, recibos);
 
     const userFarm = await UserFarm.findOneAndUpdate(
         { userId },
-        { $inc: { tintas: (adjustedPaints), papeis: (adjustedPapers) } },
+        { $inc: { recibos: (adjustedNotes) } },
         { new: true, upsert: true }
     );
     return userFarm;
 }
 
-async function removeUserFarm(userId: string, tintas: number, papeis: number) {
-    const adjustedPaints = Math.max(0, tintas);
-    const adjustedPapers = Math.max(0, papeis);
+async function removeUserFarm(userId: string, recibos: number) {
+    const adjustedNotes = Math.max(0, recibos);
 
     const userFarm = await UserFarm.findOneAndUpdate(
         { userId },
-        { $inc: { tintas: -(adjustedPaints), papeis: -(adjustedPapers) } },
+        { $inc: { recibos: -(adjustedNotes) } },
         { new: true, upsert: true }
     );
     return userFarm;
@@ -34,23 +32,20 @@ export default async function farmCommands(
     interaction: any
 ) {
     if (commandName.includes("add_")) {
-        const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
-        const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
+        const recibos = options.data.find((item: { name: string; }) => item.name === 'recibos')?.value;
         const userId = interaction.user.id;
         const userName = interaction.user;
 
         try {
-            const userFarm = await updateUserFarm(userId, tintas as number, papeis as number);
+            const userFarm = await updateUserFarm(userId, recibos as number);
             const embedMessage = new EmbedBuilder()
                 .setColor(0x008207)
                 .setTitle('Farm adicionado com sucesso!')
                 .addFields(
-                    { name: 'Tintas', value: `${tintas}`, inline: true },
-                    { name: 'Papel Moeda', value: `${papeis}`, inline: true },
+                    { name: 'Recibos', value: `${recibos}`, inline: true },
                 )
                 .addFields(
-                    { name: 'Total de tintas', value: `${userFarm?.tintas}`, inline: false },
-                    { name: 'Total de Papel Moeda', value: `${userFarm?.papeis}`, inline: false },
+                    { name: 'Total de recibos', value: `${userFarm?.recibos}`, inline: false },
                 )
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
@@ -61,22 +56,19 @@ export default async function farmCommands(
     }
 
     if (commandName.includes("rm_")) {
-        const tintas = options.data.find((item: { name: string; }) => item.name === 'tintas')?.value;
-        const papeis = options.data.find((item: { name: string; }) => item.name === 'papeis')?.value;
+        const recibos = options.data.find((item: { name: string; }) => item.name === 'recibos')?.value;
         const userId = interaction.user.id;
 
         try {
-            const userFarm = await removeUserFarm(userId, tintas as number, papeis as number);
+            const userFarm = await removeUserFarm(userId, recibos as number);
             const embedMessage = new EmbedBuilder()
                 .setColor(0xc40404)
                 .setTitle('Farm removido com sucesso!')
                 .addFields(
-                    { name: 'Tintas', value: `${tintas}`, inline: true },
-                    { name: 'Papel Moeda', value: `${papeis}`, inline: true },
+                    { name: 'Recibos', value: `${recibos}`, inline: true },
                 )
                 .addFields(
-                    { name: 'Total de tintas', value: `${userFarm?.tintas}`, inline: false },
-                    { name: 'Total de Papel Moeda', value: `${userFarm?.papeis}`, inline: false },
+                    { name: 'Total de recibos', value: `${userFarm?.recibos}`, inline: false },
                 )
                 .setTimestamp();
             await interaction.reply({ embeds: [embedMessage] });
@@ -93,8 +85,8 @@ export default async function farmCommands(
                 return;
             }
 
-            function handleFarm(tintas: number, papeis: number) {
-                if (tintas < 2000 && papeis < 4000) {
+            function handleFarm(recibos: number) {
+                if (recibos < 4000) {
                     return "❌"
                 } else {
                     return "✔"
@@ -103,9 +95,8 @@ export default async function farmCommands(
 
             let fileContent = 'Lista de Farms\n\n';
             users.forEach((user) => {
-                fileContent += `Usuário: <@${user.userId}> | ${handleFarm(user.tintas, user.papeis)} ┐\n`;
-                fileContent += `│  - Tintas: ${user.tintas}              │\n`;
-                fileContent += `│  - Papéis: ${user.papeis}              │\n`;
+                fileContent += `Usuário: <@${user.userId}> | ${handleFarm(user.recibos)} ┐\n`;
+                fileContent += `│  - Recibos: ${user.recibos}              │\n`;
                 fileContent += `└───────────────────────────────────┘ \n\n`;
             });
 
